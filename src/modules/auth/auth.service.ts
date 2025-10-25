@@ -1,7 +1,18 @@
 import { User } from './auth.model';
 import { TRegisterInput, TLoginInput, TAuthResponse } from './auth.interface';
-import { JwtUtil, ApiError } from '../../utils';
+import { JwtUtil, ApiError, ReferralCodeUtil } from '../../utils';
 import { StatusCodes } from 'http-status-codes';
+
+//unique referral code checker
+const generateUniqueReferralCode = async (): Promise<string> => {
+  let code = ReferralCodeUtil.generate(8);
+  let exists = await User.findOne({ referral_code: code });
+  while (exists) {
+    code = ReferralCodeUtil.generate(8);
+    exists = await User.findOne({ referral_code: code });
+  }
+  return code;
+};
 
 const registerUserIntoDB = async (
   payload: TRegisterInput
@@ -9,12 +20,13 @@ const registerUserIntoDB = async (
   const existing = await User.findOne({ email: payload.email });
   if (existing)
     throw new ApiError(StatusCodes.CONFLICT, 'Email already registered');
+  const referralCode = await generateUniqueReferralCode();
 
   const user = await User.create({
     email: payload.email,
     password_hash: payload.password,
     name: payload.name,
-    referral_code: '',
+    referral_code: referralCode,
   });
 
   const accessToken = JwtUtil.generateAccessToken({
