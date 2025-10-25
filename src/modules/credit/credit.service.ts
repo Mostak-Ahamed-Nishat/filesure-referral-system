@@ -1,6 +1,6 @@
 import { CreditTransaction } from './credit.model';
 import { TCreateCreditTransaction } from './credit.interface';
-import { ApiError } from '../../utils';
+import { ApiError, withTransaction } from '../../utils';
 import { StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';
 import { User } from '../auth/auth.model';
@@ -47,66 +47,57 @@ const getCreditBalanceFromDB = async (userId: string) => {
 };
 
 // Allocate the credits to the both user
+
 const allocateReferralCredits = async (
   referrerId: string,
   refereeId: string,
   referralId: string
 ) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    // credit for referrer
+  return withTransaction(async (session) => {
+    //  credit for referrer
     await CreditTransaction.create(
       [
         {
-          user_id: referrerId,
+          user_id: new mongoose.Types.ObjectId(referrerId),
           amount: 2,
           type: 'earned',
           description: 'Referral reward (referrer)',
-          related_referral_id: referralId,
+          related_referral_id: new mongoose.Types.ObjectId(referralId),
         },
       ],
       { session }
     );
 
-    // credit for referee
+    //  credit for referee
     await CreditTransaction.create(
       [
         {
-          user_id: refereeId,
+          user_id: new mongoose.Types.ObjectId(refereeId),
           amount: 2,
           type: 'earned',
           description: 'Referral reward (referee)',
-          related_referral_id: referralId,
+          related_referral_id: new mongoose.Types.ObjectId(referralId),
         },
       ],
       { session }
     );
 
-    //  update totals
+    // credits for both users
     await User.updateMany(
       { _id: { $in: [referrerId, refereeId] } },
       { $inc: { total_credits: 2 } },
       { session }
     );
 
-    //  referral conversion
+    //  referral converted
     await Referral.findByIdAndUpdate(
       referralId,
       { status: 'converted', converted_at: new Date() },
       { session }
     );
 
-    await session.commitTransaction();
-    session.endSession();
-
     return { referrerCredits: 2, refereeCredits: 2 };
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
+  });
 };
 
 export const CreditServices = {
