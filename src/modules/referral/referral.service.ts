@@ -59,7 +59,24 @@ const getReferralsByUserFromDB = async (
   };
 };
 
+// Get Referrals
+const getReferralStatsFromDB = async (userId: string) => {
+  const totalReferred = await Referral.countDocuments({ referrer_id: userId });
+  const totalConverted = await Referral.countDocuments({
+    referrer_id: userId,
+    status: 'converted',
+  });
+  const pendingReferrals = totalReferred - totalConverted;
+
+  return {
+    totalReferred,
+    totalConverted,
+    pendingReferrals,
+  };
+};
+
 export const ReferralServices = {
   createReferralIntoDB,
   getReferralsByUserFromDB,
+  getReferralStatsFromDB,
 };

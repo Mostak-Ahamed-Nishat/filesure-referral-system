@@ -28,4 +28,20 @@ const getMyReferrals = asyncHandler(async (req, res) => {
   );
 });
 
-export const ReferralController = { testReferral, getMyReferrals };
+//Get Referrals
+const getReferralStats = asyncHandler(async (req, res) => {
+  const user = (req as any).user;
+  const result = await ReferralServices.getReferralStatsFromDB(user.id);
+  ApiResponse.success(
+    res,
+    result,
+    'Referral statistics fetched',
+    StatusCodes.OK
+  );
+});
+
+export const ReferralController = {
+  testReferral,
+  getMyReferrals,
+  getReferralStats,
+};
