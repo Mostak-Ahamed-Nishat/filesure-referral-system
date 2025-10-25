@@ -1,9 +1,12 @@
-import express, { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import config from './config';
+import { errorMiddleware } from './middlewares';
+import { ApiError } from './utils';
 
 const app = express();
 
@@ -30,5 +33,16 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.all(/.*/, (req: Request, _res: Response, next: NextFunction) => {
+  next(
+    new ApiError(
+      StatusCodes.NOT_FOUND,
+      `Cannot ${req.method} ${req.originalUrl}: Route not found`
+    )
+  );
+});
+
+app.use(errorMiddleware);
 
 export default app;
