@@ -1,7 +1,8 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
 
 export interface TUser extends Document {
+  _id: Types.ObjectId;
   email: string;
   password_hash: string;
   name: string;
@@ -23,7 +24,6 @@ const UserSchema = new Schema<TUser>(
   { timestamps: true }
 );
 
-// hash password automatically
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password_hash')) return next();
   const saltRounds = 10;
