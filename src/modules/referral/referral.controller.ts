@@ -1,8 +1,9 @@
 import asyncHandler from 'express-async-handler';
-import { ApiResponse } from '../../utils';
+import { ApiResponse, ReferralCodeUtil } from '../../utils';
 
 const testReferral = asyncHandler(async (_req, res) => {
-  ApiResponse.success(res, { message: 'Referral route working' }, 'OK');
+  const code = ReferralCodeUtil.generate(8);
+  ApiResponse.success(res, { referralCode: code }, 'Generated referral code');
 });
 
 export const ReferralController = { testReferral };
