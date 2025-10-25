@@ -1,8 +1,20 @@
 import express from 'express';
 import { AuthRoutes } from '../modules/auth/auth.routes';
+import { ReferralRoutes } from '../modules/referral/referral.routes';
 
 const router = express.Router();
 
-router.use('/auth', AuthRoutes);
+const moduleRoutes = [
+  {
+    path: '/path',
+    route: AuthRoutes,
+  },
+  {
+    path: '/referrals',
+    route: ReferralRoutes,
+  },
+];
+
+moduleRoutes.map((route) => router.use(route.path, route.route));
 
 export default router;
