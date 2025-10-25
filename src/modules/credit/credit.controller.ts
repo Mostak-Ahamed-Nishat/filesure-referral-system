@@ -21,8 +21,20 @@ const getMyCreditBalance = asyncHandler(async (req, res) => {
   ApiResponse.success(res, result, 'Credit balance fetched', StatusCodes.OK);
 });
 
+//Allocate the referral to both end user
+const allocateReferralCredits = asyncHandler(async (req, res) => {
+  const { referrerId, refereeId, referralId } = req.body;
+  const result = await CreditServices.allocateReferralCredits(
+    referrerId,
+    refereeId,
+    referralId
+  );
+  ApiResponse.success(res, result, 'Referral credits allocated');
+});
+
 export const CreditController = {
   testCredit,
   createCreditTransaction,
   getMyCreditBalance,
+  allocateReferralCredits,
 };
