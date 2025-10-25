@@ -8,6 +8,7 @@ import config from './config';
 import { errorMiddleware } from './middlewares';
 import { ApiError } from './utils';
 import routes from './routes';
+import { setupSwagger } from './config/swagger.config';
 const app = express();
 
 // Middleware
@@ -15,7 +16,7 @@ app.use(express.json());
 app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }));
 app.use(helmet());
 app.use(morgan('dev'));
-
+setupSwagger(app);
 // Rate limiting
 app.use(
   rateLimit({
