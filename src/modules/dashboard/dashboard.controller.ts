@@ -3,17 +3,28 @@ import { ApiResponse } from '../../utils';
 import { DashboardServices } from './dashboard.service';
 import { StatusCodes } from 'http-status-codes';
 
-const testDashboard = asyncHandler(async (_req, res) => {
-  ApiResponse.success(res, { message: 'Dashboard module connected' }, 'OK');
-});
-
-const getDashboardStats = asyncHandler(async (req, res) => {
+const getDashboardData = asyncHandler(async (req, res) => {
   const user = (req as any).user;
-  const result = await DashboardServices.getDashboardStatsFromDB(user.id);
-  ApiResponse.success(res, result, 'Dashboard stats fetched', StatusCodes.OK);
+  const period = (req.query.period as 'month' | 'week') || 'month';
+  const range = req.query.range
+    ? Number(req.query.range)
+    : period === 'month'
+      ? 6
+      : 8;
+
+  const [stats, chartData] = await Promise.all([
+    DashboardServices.getDashboardStatsFromDB(user.id),
+    DashboardServices.getChartDataFromDB(user.id, period, range),
+  ]);
+
+  ApiResponse.success(
+    res,
+    { stats, chartData, period, range },
+    'Dashboard data fetched successfully',
+    StatusCodes.OK
+  );
 });
 
 export const DashboardController = {
-  testDashboard,
-  getDashboardStats,
+  getDashboardData,
 };

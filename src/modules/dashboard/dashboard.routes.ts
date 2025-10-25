@@ -4,6 +4,5 @@ import { authenticate } from '../../middlewares';
 
 const router = express.Router();
 
-router.get('/test', authenticate, DashboardController.testDashboard);
-router.get('/stats', authenticate, DashboardController.getDashboardStats);
+router.get('/', authenticate, DashboardController.getDashboardData);
 export const DashboardRoutes = router;
