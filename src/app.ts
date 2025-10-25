@@ -7,7 +7,7 @@ import rateLimit from 'express-rate-limit';
 import config from './config';
 import { errorMiddleware } from './middlewares';
 import { ApiError } from './utils';
-
+import routes from './routes';
 const app = express();
 
 // Middleware
@@ -24,6 +24,8 @@ app.use(
     message: 'Too many requests, please try again later.',
   })
 );
+
+app.use('/api/v1', routes);
 
 // Health check route to check is my app up or not
 app.get('/health', (_req: Request, res: Response) => {
