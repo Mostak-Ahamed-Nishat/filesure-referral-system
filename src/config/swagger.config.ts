@@ -20,10 +20,23 @@ try {
   console.warn(' Could not load package.json metadata.');
 }
 
-const isProd = process.env.NODE_ENV === 'production';
-const serverUrl = isProd
-  ? 'https://filesure-api.onrender.com/api/v1'
-  : 'http://localhost:5000/api/v1';
+// Fix: Use dynamic server URL instead of hardcoded render.com
+const getServerUrl = (): string => {
+  // Use API_URL if explicitly set
+  if (process.env.API_URL) {
+    return process.env.API_URL;
+  }
+
+  // Vercel deployment
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api/v1`;
+  }
+
+  // Local development
+  return 'http://localhost:5000/api/v1';
+};
+
+const serverUrl = getServerUrl();
 
 const options: swaggerJsdoc.Options = {
   definition: {
