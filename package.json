@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "FileSure Referral & Credit System Backend API",
   "keywords": [
-    "\"referral-credit-system"
+    "referral-credit-system"
   ],
   "homepage": "https://github.com/Mostak-Ahamed-Nishat/filesure-referral-system#readme",
   "bugs": {
@@ -17,14 +17,17 @@
   "author": "Md. Mostak Ahamed Nishat",
   "type": "commonjs",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "start:dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "start:prod": "node ./dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node src/server.ts",
+    "vercel-build": "npm run build",
     "prettier": "prettier --ignore-path .gitignore --write \"./src**/*.+(js|ts|json)\"",
-    "prettier:fix": " prettier --ignore-path .gitignore --check \"./src**/*.+(js|ts|json)\"",
+    "prettier:fix": "prettier --ignore-path .gitignore --check \"./src**/*.+(js|ts|json)\"",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix"
   },
@@ -48,6 +51,7 @@
     "next-auth": "^4.24.11",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "typescript": "^5.9.3",
     "winston": "^3.18.3",
     "zod": "^4.1.12"
   },
@@ -69,7 +73,6 @@
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.2"
   }
 }
