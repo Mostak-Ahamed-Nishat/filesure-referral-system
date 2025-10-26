@@ -1,9 +1,12 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import path from 'path';
+import fs from 'fs';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pkg = require('../../package.json');
+//  Load package.json safely (avoids import assertion issues)
+const pkgPath = path.resolve(__dirname, '../../package.json');
+const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -31,7 +34,9 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ['src/modules/**/*.routes.ts'],
+
+  //  Use absolute path for safety on Vercel build
+  apis: [path.resolve(__dirname, '../modules/**/*.routes.ts')],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
@@ -40,6 +45,10 @@ export const setupSwagger = (app: Express): void => {
   app.use(
     '/api-docs',
     swaggerUi.serve,
-    swaggerUi.setup(swaggerSpec, { explorer: true })
+    swaggerUi.setup(swaggerSpec, {
+      explorer: true,
+      customCss: '.swagger-ui .topbar { display: none }',
+    })
   );
+  console.log('Swagger UI available at → /api-docs');
 };
