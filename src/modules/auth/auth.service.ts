@@ -4,7 +4,7 @@ import { JwtUtil, ApiError, ReferralCodeUtil } from '../../utils';
 import { StatusCodes } from 'http-status-codes';
 import { ReferralServices } from '../referral/referral.service';
 
-//unique referral code checker
+// Generate a unique referral code for each user
 const generateUniqueReferralCode = async (): Promise<string> => {
   let code = ReferralCodeUtil.generate(8);
   let exists = await User.findOne({ referral_code: code });
@@ -15,6 +15,20 @@ const generateUniqueReferralCode = async (): Promise<string> => {
   return code;
 };
 
+// Helper to issue both tokens
+const issueTokens = (user: any) => {
+  const accessToken = JwtUtil.generateAccessToken({
+    id: user._id.toString(),
+    email: user.email,
+  });
+  const refreshToken = JwtUtil.generateRefreshToken({
+    id: user._id.toString(),
+    email: user.email,
+  });
+  return { accessToken, refreshToken };
+};
+
+//  Register
 const registerUserIntoDB = async (
   payload: TRegisterInput
 ): Promise<TAuthResponse> => {
@@ -22,19 +36,17 @@ const registerUserIntoDB = async (
   if (existing)
     throw new ApiError(StatusCodes.CONFLICT, 'Email already registered');
 
-  //referral code
   const referralCode = await generateUniqueReferralCode();
 
-  // check if referred by someone
+  // if referred by someone
   let referredById: string | undefined = undefined;
 
   if (payload.referralCode) {
     const referrer = await User.findOne({
       referral_code: payload.referralCode,
     });
-    if (!referrer) {
+    if (!referrer)
       throw new ApiError(StatusCodes.NOT_FOUND, 'Invalid referral code');
-    }
     referredById = referrer._id.toString();
   }
 
@@ -46,7 +58,7 @@ const registerUserIntoDB = async (
     referred_by: referredById,
   });
 
-  //  referral record
+  // create referral relationship
   if (referredById) {
     await ReferralServices.createReferralIntoDB(
       referredById,
@@ -54,14 +66,9 @@ const registerUserIntoDB = async (
     );
   }
 
-  const accessToken = JwtUtil.generateAccessToken({
-    id: user._id.toString(),
-    email: user.email,
-  });
-  const refreshToken = JwtUtil.generateRefreshToken({
-    id: user._id.toString(),
-    email: user.email,
-  });
+  const tokens = issueTokens(user);
+  user.refresh_token = tokens.refreshToken;
+  await user.save();
 
   return {
     user: {
@@ -71,10 +78,11 @@ const registerUserIntoDB = async (
       referralCode: user.referral_code,
       totalCredits: user.total_credits,
     },
-    tokens: { accessToken, refreshToken },
+    tokens,
   };
 };
 
+// 🔑 Login
 const loginUserFromDB = async (
   payload: TLoginInput
 ): Promise<TAuthResponse> => {
@@ -85,15 +93,9 @@ const loginUserFromDB = async (
   if (!valid)
     throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid credentials');
 
-  const accessToken = JwtUtil.generateAccessToken({
-    id: user._id.toString(),
-    email: user.email,
-  });
-
-  const refreshToken = JwtUtil.generateRefreshToken({
-    id: user._id.toString(),
-    email: user.email,
-  });
+  const tokens = issueTokens(user);
+  user.refresh_token = tokens.refreshToken;
+  await user.save();
 
   return {
     user: {
@@ -103,11 +105,42 @@ const loginUserFromDB = async (
       referralCode: user.referral_code,
       totalCredits: user.total_credits,
     },
-    tokens: { accessToken, refreshToken },
+    tokens,
   };
+};
+
+// Refresh token
+const refreshAccessToken = async (refreshToken: string) => {
+  if (!refreshToken)
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Refresh token missing');
+
+  const decoded = JwtUtil.verifyRefreshToken(refreshToken);
+  const user = await User.findById(decoded.id);
+  if (!user) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+
+  // validate refresh token
+  if (user.refresh_token !== refreshToken)
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid refresh token');
+
+  const newTokens = issueTokens(user);
+  user.refresh_token = newTokens.refreshToken;
+  await user.save();
+
+  return newTokens;
+};
+
+// Logout
+const logoutUser = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+  user.refresh_token = null;
+  await user.save();
+  return { message: 'Logged out successfully' };
 };
 
 export const AuthServices = {
   registerUserIntoDB,
   loginUserFromDB,
+  refreshAccessToken,
+  logoutUser,
 };

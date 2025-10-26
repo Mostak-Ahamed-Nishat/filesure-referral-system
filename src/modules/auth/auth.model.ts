@@ -8,7 +8,8 @@ export interface TUser extends Document {
   name: string;
   referral_code: string;
   total_credits: number;
-  referred_by?: string;
+  referred_by?: Types.ObjectId;
+  refresh_token?: string | null;
   comparePassword(candidate: string): Promise<boolean>;
 }
 
@@ -20,10 +21,12 @@ const UserSchema = new Schema<TUser>(
     referral_code: { type: String, unique: true },
     total_credits: { type: Number, default: 0 },
     referred_by: { type: Schema.Types.ObjectId, ref: 'User' },
+    refresh_token: { type: String, default: null },
   },
   { timestamps: true }
 );
 
+// Hash password before save
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password_hash')) return next();
   const saltRounds = 10;
