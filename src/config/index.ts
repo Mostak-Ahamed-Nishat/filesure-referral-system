@@ -14,6 +14,7 @@ interface Config {
   CORS_ORIGIN: string;
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX_REQUESTS: number;
+  FRONTEND_BASE_URL: string;
 }
 
 function getEnvVar(name: string, required = true): string {
@@ -45,6 +46,7 @@ const config: Config = {
   JWT_ACCESS_EXPIRE: getEnvVar('JWT_ACCESS_EXPIRE', false) || '24h',
   JWT_REFRESH_EXPIRE: getEnvVar('JWT_REFRESH_EXPIRE', false) || '7d',
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', false) || 'http://localhost:3000',
+  FRONTEND_BASE_URL: process.env.FRONTEND_BASE_URL || 'http://localhost:3000',
   RATE_LIMIT_WINDOW_MS:
     Number(getEnvVar('RATE_LIMIT_WINDOW_MS', false)) || 900000,
   RATE_LIMIT_MAX_REQUESTS:
