@@ -4,9 +4,26 @@ import { Express } from 'express';
 import path from 'path';
 import fs from 'fs';
 
-//  Load package.json safely (avoids import assertion issues)
-const pkgPath = path.resolve(__dirname, '../../package.json');
-const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+let pkg: { name: string; version: string };
+
+try {
+  // Try to resolve package.json safely
+  const possiblePaths = [
+    path.resolve(process.cwd(), 'package.json'),
+    path.resolve(__dirname, '../../package.json'),
+  ];
+
+  const pkgFile = possiblePaths.find((p) => fs.existsSync(p));
+  pkg = JSON.parse(fs.readFileSync(pkgFile!, 'utf-8'));
+} catch {
+  pkg = { name: 'Unknown App', version: '0.0.0' };
+  console.warn(' Could not load package.json metadata.');
+}
+
+const isProd = process.env.NODE_ENV === 'production';
+const serverUrl = isProd
+  ? 'https://filesure-api.onrender.com/api/v1'
+  : 'http://localhost:5000/api/v1';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -16,13 +33,7 @@ const options: swaggerJsdoc.Options = {
       version: pkg.version,
       description: 'FileSure Referral System API Documentation',
     },
-    servers: [
-      { url: 'http://localhost:5000/api/v1', description: 'Development' },
-      {
-        url: 'https://filesure-api.onrender.com/api/v1',
-        description: 'Production',
-      },
-    ],
+    servers: [{ url: serverUrl }],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -34,8 +45,6 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-
-  //  Use absolute path for safety on Vercel build
   apis: [path.resolve(__dirname, '../modules/**/*.routes.ts')],
 };
 
@@ -50,5 +59,5 @@ export const setupSwagger = (app: Express): void => {
       customCss: '.swagger-ui .topbar { display: none }',
     })
   );
-  console.log('Swagger UI available at → /api-docs');
+  console.log(' Swagger UI available at → /api-docs');
 };
