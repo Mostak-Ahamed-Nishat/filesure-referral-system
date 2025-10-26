@@ -28,6 +28,14 @@ app.use(
 
 app.use('/api/v1', routes);
 
+app.get('/', (_req: Request, res: Response) => {
+  return res.status(200).json({
+    status: 'OK',
+    message: 'Home Route',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health check route to check is my app up or not
 app.get('/health', (_req: Request, res: Response) => {
   return res.status(200).json({
